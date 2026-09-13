@@ -1,5 +1,7 @@
 const db = require('../config/db');
 
+const DOMINIO_BACKEND = 'http://localhost:3200';//Para que en dado caso de cambiar el puerto o dir del backend las imagenes nuevas actualicen su ruta
+
 /* Trae los productos activos con stock disponible, para que el front arme el carrito.
 El campo "cantidad" de ProductoCarrito no aplica aquí (es 0 hasta que el cliente lo agregue),
 así que el front debe inicializarlo al recibir estos datos
@@ -29,7 +31,8 @@ function obtenerProductosCarrito(callback) {
         // aquí las convertimos explícitamente con Number() antes de mandarlas al front
         const resultadosConvertidos = resultados.map(producto => ({
             ...producto,
-            precio: Number(producto.precio)
+            precio: Number(producto.precio),
+            imagenUrl: producto.imagenUrl!=='' ? `${DOMINIO_BACKEND}/${producto.imagenUrl}` : null
         }));
         callback(null, resultadosConvertidos);
     });
