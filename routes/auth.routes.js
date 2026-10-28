@@ -1,41 +1,33 @@
+//La ruta solo recibe la petición, arma el model, llama al controller y responde; la lógica vive en el controller
 const express = require('express');
 const router = express.Router();
-const authService = require('../services/auth.service');
+const authController = require('../controllers/auth.controller');
+const { RespuestaRegistro } = require('../models/respuestaRegistro.model');
 
-// POST /api/auth/registro   body: { nombre, apellido, correo, password, telefono }
+// POST /api/auth/registro   
+//Aqui se recibe la petición para registrar un nuevo usuario, recibimos los datos siguientes:
+//body: { nombre, apellido, correo, password, telefono,confirmacionTerminosYCondiciones }
 router.post('/registro', (req, res) => {
-    const { nombre, apellido, correo, password, telefono } = req.body;
-
-    // Validaciones mínimas de forma lo ideal es reforzar esto también en el front
-    if (!nombre || !apellido || !correo || !password || !telefono) {
-        return res.status(400).json({ creado: false, mensaje: 'Faltan campos obligatorios' });
-    }
-
-    authService.registrarUsuario({ nombre, apellido, correo, password, telefono }, (error) => {
+    const { nombre, apellido, correo, password, telefono,confirmacionTerminosYCondiciones } = req.body;
+    authController.registro(nombre,apellido,correo,password,telefono,confirmacionTerminosYCondiciones, (error, respuesta) => {
         if (error) {
-            if (error.correoDuplicado) {
-                return res.status(409).json({ creado: false, mensaje: 'Ese correo ya está registrado' });
-            }
-            return res.status(500).json({ creado: false, mensaje: 'Error al registrar el usuario' });
+            return res.status(error.status).json(new RespuestaRegistro(false, error.mensaje));
         }
-        res.json({ creado: true, mensaje: 'Usuario registrado correctamente' });
+        res.status(201).json(respuesta);
     });
 });
 
-// POST /api/auth/login   body: { correo, password }
+// POST /api/auth/login   
+//En este endpoint permitimos el iniciar sesión, aquí recibimos un correo y contraseña enviados y los comprobamos
+//si todo sale bien y las credenciales son validas retornamos el token y datos del usuario
+//body: { correo, password }
 router.post('/login', (req, res) => {
     const { correo, password } = req.body;
-
-    if (!correo || !password) {
-        return res.status(400).json({ autenticado: false, mensaje: 'Correo y contraseña son obligatorios' });
-    }
-
-    authService.iniciarSesion(correo, password, (error, resultado) => {
+    authController.login(correo, password, (error, respuesta) => {
         if (error) {
-            return res.status(500).json({ autenticado: false, mensaje: 'Error al iniciar sesión' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
-        // Si no fue autenticado, el resultado ya trae { autenticado: false }
-        res.json(resultado);
+        res.json(respuesta);
     });
 });
 

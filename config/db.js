@@ -1,12 +1,13 @@
+//config
 const mysql = require('mysql2')
 
 // createPool en vez de createConnection: esto crea un grupo de conexiones reutilizables
 // en vez de una sola línea fija, esto es necesario para poder usar transacciones
 const conexion = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'ak_coffe',
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     connectionLimit: 10 // Como máximo solo podemos tener 10 conexiones en la pool
 })
 

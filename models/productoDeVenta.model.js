@@ -1,3 +1,4 @@
+//Cada producto reservado dentro de un pedido
 class ProductoDeVenta{
     constructor(nombre,cantidad,precioUnitario,subtotal){
         this.nombre=nombre
@@ -6,4 +7,4 @@ class ProductoDeVenta{
         this.subtotal=subtotal
     }
 }
-module.exports=ProductoDeVenta
+module.exports={ProductoDeVenta}

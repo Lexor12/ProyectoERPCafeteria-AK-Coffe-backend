@@ -1,3 +1,4 @@
+//config
 // Datos fijos de la tienda, usados en el comprobante del pedido del cliente
 // A futuro esto debería venir de una tabla de configuración, pero por ahora es constante
 module.exports = {

@@ -1,17 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const pedidoClienteService = require('../services/pedidoCliente.service');
-
+const pedidoClienteController = require('../controllers/pedido.controller');
+const {verificarToken,permitirRoles}=require('../middlewares/auth.middleware')
 // GET /api/pedidos-cliente/:idUsuario
 /*
-Aqui se pide un ID, pero cuando tenga lo de Auth se usará el token, ya que esto es básicamente
-la vulnerabilidad más simple y negativa de mi sitio y sin duda alguna me pondria como dentro del top 5 
-desarrolladores que hacen sistemas mas inseguros en caso de que esto lo despliegue fuera de producción
+Aqui se pide un ID el cual se encuentra dentro del token que es mandado por el usuario
 */
-router.get('/:idUsuario', (req, res) => {
-    pedidoClienteService.obtenerPedidosCliente(req.params.idUsuario, (error, pedidos) => {
+router.get('/', verificarToken,permitirRoles('cliente'),(req, res) => {
+    pedidoClienteController.obtenerPedidosCliente(req.usuario.idUsuario, (error, pedidos) => {
         if (error) {
-            return res.status(500).json({ mensaje: 'Error al consultar tus pedidos' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
         res.json(pedidos);
     });

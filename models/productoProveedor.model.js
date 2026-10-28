@@ -1,5 +1,7 @@
+//Producto asociado a un proveedor (aquí el precio es de COMPRA)
 class ProductoProveedor{
-    constructor(idProducto,nombre,descripcion,precio,idProveedor,imagenUrl){
+    constructor({idProductoProveedor,idProducto,nombre,descripcion,precio,idProveedor,imagenUrl}){
+        this.idProductoProveedor=idProductoProveedor
         this.idProducto=idProducto
         this.nombre=nombre
         this.descripcion=descripcion
@@ -8,4 +10,4 @@ class ProductoProveedor{
         this.imagenUrl=imagenUrl
     }
 }
-module.exports=ProductoProveedor
+module.exports={ProductoProveedor}

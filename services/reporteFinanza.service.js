@@ -1,58 +1,69 @@
 const db = require('../config/db');
+const {DatoFinanciero}=require('../models/datoFinanciero.model')
 
-// Genera el reporte financiero de un rango de fechas
-function obtenerReporteFinanza(fechaInicio, fechaFin, callback) {
-    const sentenciaVentas = `
-        SELECT fecha, total_pagado AS monto
+// Las tres consultas regresan el monto ya sumado POR DÍA, con la fecha como texto yyyy-MM-dd
+// (DATE_FORMAT evita que Node convierta la fecha a Date y se corra por la zona horaria)
+// Usamos DATE(fecha) en el WHERE porque BETWEEN con un DATETIME dejaría fuera las ventas
+// del último día (se compararía contra las 00:00:00 de ese día)
+
+// Ventas no canceladas
+function obtenerVentasPorDia(fechaInicio, fechaFin, callback) {
+    const sentencia = `
+        SELECT DATE_FORMAT(fecha, '%Y-%m-%d %H:%i:%s') AS dia, SUM(total_pagado) AS monto
         FROM Venta
         WHERE cancelado = FALSE AND DATE(fecha) BETWEEN ? AND ?
-        ORDER BY fecha
-    `;//Tenemos que poner DATE, ya que:
-    /*
-    BETWEEN solo acepta registros con fecha igual o antes de las 00:00:00 del dia 12, asi que usando funcion de DATE 
-    le quitamos la hora al campo antes de compararlo, lo que permite comparar sin definir la hora
-    */
-    const sentenciaCompras = `
-        SELECT fecha, total AS monto
-        FROM Compra
-        WHERE DATE(fecha) BETWEEN ? AND ?
-        ORDER BY fecha
+        GROUP BY dia
+        ORDER BY dia
     `;
-    db.query(sentenciaVentas, [fechaInicio, fechaFin], (errorVentas, ventas) => {
-        if (errorVentas) {
-            callback(errorVentas, null);
+    db.query(sentencia, [fechaInicio, fechaFin], (error, filas) => {
+        if (error) {
+            callback(error, null);
             return;
         }
+        callback(null, filas.map(fila => new DatoFinanciero(fila.dia, Number(fila.monto))));
+    });
+}
 
-        db.query(sentenciaCompras, [fechaInicio, fechaFin], (errorCompras, compras) => {
-            if (errorCompras) {
-                callback(errorCompras, null);
-                return;
-            }
+// Compras a proveedores
+function obtenerComprasPorDia(fechaInicio, fechaFin, callback) {
+    const sentencia = `
+        SELECT DATE_FORMAT(fecha, '%Y-%m-%d %H:%i:%s') AS dia, SUM(total) AS monto
+        FROM Compra
+        WHERE DATE(fecha) BETWEEN ? AND ?
+        GROUP BY dia
+        ORDER BY dia
+    `;
+    db.query(sentencia, [fechaInicio, fechaFin], (error, filas) => {
+        if (error) {
+            callback(error, null);
+            return;
+        }
+        callback(null, filas.map(fila => new DatoFinanciero(fila.dia, Number(fila.monto))));
+    });
+}
 
-            let ingresos = 0;
-            for (const v of ventas) {
-                ingresos += Number(v.monto);//Obtenemos el total en ventas
-            }
-
-            let egresos = 0;
-            for (const c of compras) {
-                egresos += Number(c.monto);//Obtenemos el total en compras a proveedores
-            }
-
-            callback(null, {
-                fechaInicio,
-                fechaFin,
-                ingresos,
-                egresos,
-                balance: ingresos - egresos,
-                detalleVentas: ventas,   // [{ fecha, monto }], asi como se pide en ProductoDeVenta, lamentablemente aqui no tenemos tipado explicito así que ojala y nunca cambie esto de nombre en Models
-                detalleCompras: compras, // [{ fecha, monto }]
-            });
-        });
+// Cada asistencia = un día pagado, al salario diario del trabajador.
+// Asistencia guarda fecha y hora de entrada por separado, así que TIMESTAMP(fecha, hora_entrada)
+function obtenerNominaPorDia(fechaInicio, fechaFin, callback) {
+    const sentencia = `
+        SELECT DATE_FORMAT(TIMESTAMP(a.fecha, a.hora_entrada), '%Y-%m-%d %H:%i:%s') AS dia, SUM(t.salario) AS monto
+        FROM Asistencia a
+        INNER JOIN Trabajador t ON t.id_trabajador = a.id_trabajador
+        WHERE a.fecha BETWEEN ? AND ?
+        GROUP BY dia
+        ORDER BY dia
+    `;
+    db.query(sentencia, [fechaInicio, fechaFin], (error, filas) => {
+        if (error) {
+            callback(error, null);
+            return;
+        }
+        callback(null, filas.map(fila => new DatoFinanciero(fila.dia, Number(fila.monto))));
     });
 }
 
 module.exports = {
-    obtenerReporteFinanza,
+    obtenerVentasPorDia,
+    obtenerComprasPorDia,
+    obtenerNominaPorDia,
 };

@@ -1,97 +1,82 @@
 //Importo las librerias que usaré para los endpoints disponibles
 const express = require('express');
 const router = express.Router();
-const productoService = require('../services/producto.service');
-const uploadConfig = require('../config/upload')
-
+const productoController = require('../controllers/producto.controller');
+const {verificarToken,permitirRoles}=require('../middlewares/auth.middleware')
 //Aqui se define los verbos HTTP que se pueden usar sobre el endpoint
-router.get('/', (req, res) => {
-    productoService.obtenerProductos(
-        (error, productos) => {
-            if (error) {
-                return res.status(500).json({
-                    mensaje: 'Error al consultar productos'
-                });
-            }
-            res.json(productos);
+
+// GET /api/productos
+router.get('/', verificarToken, permitirRoles('administrador','cliente'), (req, res) => {
+    productoController.obtenerProductos((error, productos) => {
+        if (error) {
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
-    );
+        res.json(productos);
+    });
+});
+
+
+// POST /api/productos   body: { producto: { nombre, descripcion, costoUnitario } }
+router.post('/', verificarToken, permitirRoles('administrador'), (req, res) => {
+    const { nombre,descripcion,costoUnitario } = req.body ?? {};
+    productoController.registrarProducto(nombre, descripcion, costoUnitario, (error, respuesta) => {
+        if (error) {
+            return res.status(error.status).json({ registrada: false, mensaje: error.mensaje });
+        }
+        res.json(respuesta);
+    });
 });
 
 // GET /api/productos/:id
-router.get('/:id', (req, res) => {
-    productoService.obtenerProductoPorId(req.params.id, (error, producto) => {
+router.get('/:id', verificarToken, permitirRoles('administrador','cliente'), (req, res) => {
+    productoController.obtenerProductoPorId(req.params.id, (error, producto) => {
         if (error) {
-            return res.status(500).json({ mensaje: 'Error al consultar el producto' });
-        }
-        if (!producto) {
-            return res.status(404).json({ mensaje: 'Producto no encontrado' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
         res.json(producto);
     });
 });
 
 // PUT /api/productos/:id
-router.put('/:id', (req, res) => {
-    productoService.editarProducto(req.params.id, req.body, (error, resultado) => {
+router.put('/:id', verificarToken, permitirRoles('administrador'), (req, res) => {
+    const { nombre, descripcion, precio } = req.body;
+    productoController.editarProducto(req.params.id, nombre, descripcion, precio, (error) => {
         if (error) {
-            return res.status(500).json({ mensaje: 'Error al editar el producto' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
         res.json({ mensaje: 'Producto actualizado' });
     });
 });
 
 // PATCH /api/productos/:id/desactivar
-router.patch('/:id/desactivar', (req, res) => {
-    productoService.desactivarProducto(req.params.id, (error, resultado) => {
+router.patch('/:id/desactivar', verificarToken, permitirRoles('administrador'), (req, res) => {
+    productoController.desactivarProducto(req.params.id, (error) => {
         if (error) {
-            return res.status(500).json({ mensaje: 'Error al desactivar el producto' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
         res.json({ mensaje: 'Producto desactivado' });
     });
 });
 
 // POST /api/productos/:id/imagen   body: { imagen: "data:image/png;base64,...." }
-router.post('/:id/imagen', (req, res) => {
-    let datosImagen;
-    try {
-        datosImagen = uploadConfig.decodificarImagen(req.body.imagen);
-    } catch (error) {
-        return res.status(400).json({ mensaje: error.message });
-    }
-
-    productoService.obtenerImagenActual(req.params.id, (error, imagenAnterior) => {
+//basicamente aqui nos encargamos de eliminar la imagen anterior, y permitimos reemplazarla con una nueva
+router.post('/:id/imagen', verificarToken, permitirRoles('administrador'), (req, res) => {
+    const { imagen } = req.body ?? {};
+    productoController.subirImagen(req.params.id, imagen, (error, imagenUrl) => {
         if (error) {
-            return res.status(500).json({ mensaje: 'Error al consultar el producto' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
-
-        uploadConfig.eliminarImagenArchivo(imagenAnterior); 
-        const rutaImagen = uploadConfig.guardarImagen(req.params.id, datosImagen.buffer, datosImagen.extension);
-
-        productoService.actualizarImagenProducto(req.params.id, rutaImagen, (error) => {
-            if (error) {
-                return res.status(500).json({ mensaje: 'Error al guardar la imagen' });
-            }
-            res.json({ mensaje: 'Imagen actualizada', imagenUrl: rutaImagen });
-        });
+        res.json({ mensaje: 'Imagen actualizada', imagenUrl });
     });
 });
 
-// DELETE /api/productos/:id/imagen
-router.delete('/:id/imagen', (req, res) => {
-    productoService.obtenerImagenActual(req.params.id, (error, imagenActual) => {
+// DELETE /api/productos/:id/imagen, basicamente aqui nos encargamos de eliminar la imagen asociada a cierto producto
+router.delete('/:id/imagen', verificarToken, permitirRoles('administrador'), (req, res) => {
+    productoController.quitarImagen(req.params.id, (error) => {
         if (error) {
-            return res.status(500).json({ mensaje: 'Error al consultar el producto' });
+            return res.status(error.status).json({ mensaje: error.mensaje });
         }
-
-        uploadConfig.eliminarImagenArchivo(imagenActual);
-
-        productoService.quitarImagenProducto(req.params.id, (error) => {
-            if (error) {
-                return res.status(500).json({ mensaje: 'Error al eliminar la imagen' });
-            }
-            res.json({ mensaje: 'Imagen eliminada' });
-        });
+        res.json({ mensaje: 'Imagen eliminada' });
     });
 });
 
