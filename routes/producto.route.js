@@ -6,6 +6,7 @@ const {verificarToken,permitirRoles}=require('../middlewares/auth.middleware')
 //Aqui se define los verbos HTTP que se pueden usar sobre el endpoint
 
 // GET /api/productos
+//Devuelve todos los productos activos
 router.get('/', verificarToken, permitirRoles('administrador','cliente'), (req, res) => {
     productoController.obtenerProductos((error, productos) => {
         if (error) {
@@ -17,6 +18,7 @@ router.get('/', verificarToken, permitirRoles('administrador','cliente'), (req, 
 
 
 // POST /api/productos   body: { producto: { nombre, descripcion, costoUnitario } }
+//Registrar un nuevo producto
 router.post('/', verificarToken, permitirRoles('administrador'), (req, res) => {
     const { nombre,descripcion,costoUnitario } = req.body ?? {};
     productoController.registrarProducto(nombre, descripcion, costoUnitario, (error, respuesta) => {
@@ -28,6 +30,7 @@ router.post('/', verificarToken, permitirRoles('administrador'), (req, res) => {
 });
 
 // GET /api/productos/:id
+//Obtener un producto en base a un id
 router.get('/:id', verificarToken, permitirRoles('administrador','cliente'), (req, res) => {
     productoController.obtenerProductoPorId(req.params.id, (error, producto) => {
         if (error) {
@@ -38,6 +41,7 @@ router.get('/:id', verificarToken, permitirRoles('administrador','cliente'), (re
 });
 
 // PUT /api/productos/:id
+//Editar los campos de un producto
 router.put('/:id', verificarToken, permitirRoles('administrador'), (req, res) => {
     const { nombre, descripcion, precio } = req.body;
     productoController.editarProducto(req.params.id, nombre, descripcion, precio, (error) => {
@@ -49,6 +53,7 @@ router.put('/:id', verificarToken, permitirRoles('administrador'), (req, res) =>
 });
 
 // PATCH /api/productos/:id/desactivar
+//desactivar (soft delete) a un producto
 router.patch('/:id/desactivar', verificarToken, permitirRoles('administrador'), (req, res) => {
     productoController.desactivarProducto(req.params.id, (error) => {
         if (error) {

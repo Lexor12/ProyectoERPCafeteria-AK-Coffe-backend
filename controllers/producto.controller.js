@@ -1,6 +1,8 @@
 //El controller valida, aplica las reglas de producto, arma la dirección de las imágenes y junta producto con productoProveedor (Que son digamos los 2 catalogos, uno de admin y otro de cliente)
 const crypto = require('crypto');
+//Producto service se encarga de la gestion de la entidad de Producto de la base de datos
 const productoService = require('../services/producto.service');
+//Producto proveedor se encarga de hacer la gestion para asociar un producto con un proveedor o devolver especificos
 const productoProveedorService = require('../services/productoProveedor.service');
 const transaccionService = require('../services/transaccion.service');
 const uploadConfig = require('../config/upload');

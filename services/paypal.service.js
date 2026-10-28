@@ -53,7 +53,10 @@ async function paypalRequest(ruta,metodo,body) {//La ruta, el metodo y el objeto
 function crearOrden(datosOrden) {//Esta simplemente hace el post, los datos los sigue mandando el controller, pero ya no la ruta ni el metodo
     return paypalRequest('/v2/checkout/orders', 'POST', datosOrden)
 }
-function capturarOrden(orderID) {//Permite capturar una compra o sea efectuarla
+function capturarOrden(orderID) {//Permite capturar una compra o sea efectuarla después de que ya fue pagada
     return paypalRequest(`/v2/checkout/orders/${encodeURIComponent(orderID)}/capture`, 'POST', {})
 }
-module.exports = { crearOrden, capturarOrden }
+function reembolsarCaptura(idCaptura) {
+    return paypalRequest(`/v2/payments/captures/${encodeURIComponent(idCaptura)}/refund`, 'POST', {})
+}
+module.exports = { crearOrden, capturarOrden,reembolsarCaptura }

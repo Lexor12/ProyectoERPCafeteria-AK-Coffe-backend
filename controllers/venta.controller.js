@@ -129,7 +129,6 @@ function registrarDetalleYStock(conexion, idVenta, items, indice, callback) {
 // Registra la venta completa: todo pasa junto o no pasa nada (transacción)
 function registrarVenta(idUsuario, rfcCliente, resumen, callback) {
     const idVenta = crypto.randomUUID();//Generamos un UUID aleatorio
-
     transaccionService.iniciarTransaccion((error, conexion) => {//Usamos el servicio de transacciones para solicitar una a la BD y hacer todo o nada
         if (error) {
             callback(error, null);
@@ -187,8 +186,6 @@ async function procesarInicioPago(idUsuario, rfcCliente, items) {
         }],
         application_context: { return_url: URL_RETORNO, cancel_url: URL_CANCELACION }
     });
-    
-
     //PayPal no da el enlace directo, hay que buscarlo en la lista de links de la respuesta
     const enlace = (orden.links || []).find(link => link.rel === 'approve' || link.rel === 'payer-action');
     if (!enlace) {
@@ -206,13 +203,11 @@ async function procesarCaptura(orderID, idUsuario, rfcCliente, items) {
     if (errorValidacion) {
         throw errorValidacion;
     }
-
     // Se vuelve a calcular el total con los precios reales: lo que mande el navegador no se toma como verdad
     const resumen = await calcularResumenAsync(unificarItems(items));
     if (resumen.excedidos.length > 0) {
         throw new ErrorApp(400, 'Stock insuficiente para algunos productos');
     }
-
     let captura;
     try {
         captura = await paypalService.capturarOrden(orderID);
@@ -225,15 +220,24 @@ async function procesarCaptura(orderID, idUsuario, rfcCliente, items) {
     }
     // El monto que PayPal confirma debe ser exactamente el total de la compra, si esto no ocurre es posible que el pago que se intento realizar fue manipulado
     if (datosCaptura.amount.value !== resumen.total.toFixed(2)) {
+        try {
+            await paypalService.reembolsarCaptura(datosCaptura.id);
+        } catch (errorReembolso) {
+            console.error('No se pudo reembolsar el pago', errorReembolso);
+        }
         throw new ErrorApp(400, 'El monto cobrado no coincide con el total de la compra');
     }
-
     // Solo si PayPal ya confirmó el dinero se registra la venta y se descuenta el stock
     let idVenta;
     try {
         idVenta = await registrarVentaAsync(idUsuario, rfcCliente, resumen);//Aqui ademas de hacer el pago, en una misma transaccion ocurre el proceso de guardado, donde si no funciona se cancela todo y el pago
     } catch (error) {
         console.error(error);//Aqui recibimos el error de cuando por ejemplo, alguien mas habia hecho la compra al momento y no se pudo registrar
+        try {
+            await paypalService.reembolsarCaptura(datosCaptura.id);
+        } catch (errorReembolso) {
+            console.error('No se pudo reembolsar el pago', errorReembolso);
+        }
         throw new ErrorApp(400, 'La venta no se completo');
     }
 

@@ -83,7 +83,8 @@ function editarProveedor(idProveedor, nombre, telefono, callback) {
 // Las dos cosas pasan juntas o no pasa ninguna; sus compras se conservan
 function desactivarProveedor(idProveedor, callback) {
     if (!validadores.esUuidValido(idProveedor)) {//Validamos que el UUID que estamos mandando sea adecuado
-        return new ErrorApp(400, 'El id del proveedor no es válido');
+        callback(new ErrorApp(400, 'El id del proveedor no es válido'), null);
+        return ;
     }
     transaccionService.iniciarTransaccion((error, conexion) => {
         if (error) {//Si el servicio nos da un error, debemos de notificarlo y regrearlo
@@ -137,7 +138,9 @@ function obtenerProductosProveedor(callback) {
 function asociarProductoProveedor(idProveedor, idProducto, precioCompra, callback) {
     //Aquí tenemos que validar los demás parametros usamos los validadores que definí previamente en config/validadores
     if (!validadores.esUuidValido(idProveedor)) {//Validamos que el UUID que estamos mandando sea adecuado
-        return new ErrorApp(400, 'El id del proveedor no es válido');
+        callback(new ErrorApp(400, 'El id del proveedor no es válido'), null);
+        return ;
+        
     }
     if (!validadores.esUuidValido(idProducto)) {//Validamos que el UUID que estamos mandando sea adecuado
         callback(new ErrorApp(400, 'El id del producto no es válido'), null);
@@ -208,7 +211,8 @@ function editarProductoProveedor(idProductoProveedor, nombre, descripcion, preci
 function eliminarProductoProveedor(idProveedor, idProducto, callback) {
     //Aquí tenemos que validar los demás parametros usamos los validadores que definí previamente en config/validadores
     if (!validadores.esUuidValido(idProveedor)) {//Validamos que el UUID que estamos mandando sea adecuado
-        return new ErrorApp(400, 'El id del proveedor no es válido');
+        callback(new ErrorApp(400, 'El id del proveedor no es válido'), null);
+        return ;
     }
     if (!validadores.esUuidValido(idProducto)) {//Validamos que el UUID que estamos mandando sea adecuado
         callback(new ErrorApp(400, 'El id del producto no es válido'), null);

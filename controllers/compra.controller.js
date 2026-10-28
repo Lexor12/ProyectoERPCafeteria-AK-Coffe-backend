@@ -111,6 +111,10 @@ Registra un producto nuevo desde un proveedor, lo crea con stock en 0 y usa el m
 proveedor como precio de venta (después el admin lo puede ajustar desde Inventario, sin que eso afecte el precio de compra),
 y lo asocia a ese proveedor. Aquí NO se registra ninguna compra ni se da stock, eso se hace después con un "Surtir" normal
 */
+//La razón por la cual deje esto aqui, es que antes yo tenia que cuando creabas un producto, como asociado a un proveedor
+//pues idealmente podrias ya tener "un gasto", actualmente lo deje aqui para "expandir a futuro", donde actualmente no esta implementando
+//pero en un futuro si se desea que al momento de asociar un producto se defina un stock (por defecto) como de "comprado" este valor tambíen se guarde ya como
+//detalle de compra
 function registrarCompraProductoNuevo(idProveedor, nombre, descripcion, costoUnitario, callback) {
     //Primero comprobamos que los parametros requeridos realmente tengan datos, si uno falta damos error
     if (!idProveedor || !nombre || !costoUnitario) {

@@ -74,6 +74,7 @@ function editarTrabajador(idTrabajador, nombre, apellido, area, rfc,salario, hor
     //Como si estamos ingresando valores debemos comprobarlos antes
     if(!validadores.esUuidValido(idTrabajador)){//Primero verificamos que el id sea adecuado, ya que como estamos editando aqui SI necesitamos una id
         callback(new ErrorApp(400, 'El id del trabajador no es válido'),null)
+        return;
     }
     //Todas estas validaciones se encuentran en /config/validaciones
     if (!validadores.esNombreValido(nombre)) {//Comprobamos que sea un nombre valido
@@ -124,6 +125,7 @@ function cambiarActivoTrabajador(idTrabajador, activo, callback){
     //Como si estamos ingresando valores debemos comprobarlos antes
     if(!validadores.esUuidValido(idTrabajador)){//Primero verificamos que el id sea adecuado, ya que como estamos editando aqui SI necesitamos una id
         callback(new ErrorApp(400, 'El id del trabajador no es válido'),null)
+        return;
     }
     if (typeof activo !== 'boolean') {
         callback(new ErrorApp(400, 'El campo activo debe ser true o false'), null);
@@ -149,10 +151,11 @@ function obtenerAsistencias(idTrabajador,callback){
     //Como si estamos ingresando valores debemos comprobarlos antes
     if(!validadores.esUuidValido(idTrabajador)){//Primero verificamos que el id sea adecuado, ya que como estamos editando aqui SI necesitamos una id
         callback(new ErrorApp(400, 'El id del trabajador no es válido'),null)
+        return;
     }
     asistenciaService.obtenerAsistencias(idTrabajador,(error,asistencias)=>{
         if(error){
-            callback(new ErrorApp(500,'Error al consultar las asistencias',null))
+            callback(new ErrorApp(500,'Error al consultar las asistencias'),null)
             return;
         }
         callback(null,asistencias)
@@ -212,6 +215,7 @@ function calcularNomina(idTrabajador, fechaInicio, fechaFin, callback) {
     //Como si estamos ingresando valores debemos comprobarlos antes
     if(!validadores.esUuidValido(idTrabajador)){//Primero verificamos que el id sea adecuado, ya que como estamos editando aqui SI necesitamos una id
         callback(new ErrorApp(400, 'El id del trabajador no es válido'),null)
+        return;
     }
     if (!fechaInicio || !fechaFin) {
         callback(new ErrorApp(400, 'Se requiere fechaInicio y fechaFin'),null)

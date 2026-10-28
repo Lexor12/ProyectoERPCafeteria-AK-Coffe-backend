@@ -17,7 +17,6 @@ router.get('/productos',verificarToken,permitirRoles('administrador','cliente'),
 /*
 Esta permite validar que los elementos que tengo guardados en carrito remoto estan actualizados
 */
-
 router.post('/validar', verificarToken,permitirRoles('administrador','cliente'),(req, res) => {
     const items  = req.body;
     productoCarritoController.validarDisponibilidad(items, (error, resultado) => {
